@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/fatih/color"
+	"github.com/hunderaweke/codative-codeforces/cmd"
 	"github.com/hunderaweke/codative-codeforces/utils"
 )
 
@@ -12,4 +13,5 @@ func main() {
 		return
 	}
 	utils.CreateFiles(*data)
+	cmd.Test()
 }
