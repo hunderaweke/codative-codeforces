@@ -9,7 +9,7 @@ import (
 )
 
 func Fetch() (*types.Response, error) {
-	resp, err := http.Get("https://codeforces.com/api/contest.standings?contestId=1986")
+	resp, err := http.Get("https://codeforces.com/api/contest.standings?contestId=531455")
 	if err != nil {
 		return nil, err
 	}
