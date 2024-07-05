@@ -5,6 +5,7 @@ go 1.22.4
 require (
 	github.com/PuerkitoBio/goquery v1.9.2
 	github.com/fatih/color v1.17.0
+	github.com/mitchellh/go-homedir v1.1.0
 )
 
 require (
