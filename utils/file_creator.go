@@ -24,7 +24,7 @@ func CreateFiles(data types.Response) error {
 		os.Mkdir(probName, 0755)
 		os.Chdir(probName)
 		color.Blue(fmt.Sprintf("Generating %s file and directories", prob.Index+" "+prob.Name))
-		os.Create(probName + ".py")
+		// TODO: Implement Template File Generating
 		FetchTestCases(data.Result.Contest.Id, prob.Index, prob.Name)
 		color.Green(fmt.Sprintf("Finished Generating %s file and directories", prob.Index+" "+prob.Name))
 		os.Chdir("..")
