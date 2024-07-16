@@ -9,11 +9,11 @@ import (
 	"errors"
 	"io"
 	"net/url"
+	"regexp"
 
 	"github.com/hunderaweke/codative-codeforces/utils"
 	"github.com/juju/persistent-cookiejar"
 	"golang.org/x/net/publicsuffix"
-	"regexp"
 )
 
 func createHash(hash string) []byte {
@@ -39,6 +39,7 @@ func encrypt(password, handle string) (string, error) {
 	plaintext := hex.EncodeToString(text)
 	return plaintext, nil
 }
+
 func decrypt(password, handle string) (string, error) {
 	data, err := hex.DecodeString(password)
 	if err != nil {
@@ -65,7 +66,7 @@ func findCsrf(body []byte) (string, error) {
 	reg := regexp.MustCompile(`csrf='(.+?)'`)
 	tmp := reg.FindSubmatch(body)
 	if len(tmp) < 2 {
-		return "", errors.New("Cannot find csrf")
+		return "", errors.New("cannot find csrf")
 	}
 	return string(tmp[1]), nil
 }
@@ -77,7 +78,8 @@ func genFtaa() string {
 func genBtaa() string {
 	return "44fdcff4e443a6be61d26650b259dd90"
 }
-func (c *Client) Login() error {
+
+func (c *Client) Login(handleOrEmail, password string) error {
 	jar, _ := cookiejar.New(&cookiejar.Options{PublicSuffixList: publicsuffix.List})
 	c.client.Jar = jar
 	u, _ := url.Parse("https://codeforces.com/enter")
@@ -91,20 +93,30 @@ func (c *Client) Login() error {
 		"action":        {"enter"},
 		"ftaa":          {ftaa},
 		"bfaa":          {bfaa},
-		"handleOrEmail": {"hundera"},
-		"password":      {"#Phr0n3m4"},
+		"handleOrEmail": {handleOrEmail},
+		"password":      {password},
 		"_tta":          {"176"},
 		"remember":      {"on"},
 	})
 	if err != nil {
 		return err
 	}
-	reg := regexp.MustCompile(`handle = "(.+?)"`)
+	reg := regexp.MustCompile("Invalid handle/email or password")
+	loginError := reg.FindSubmatch(resp)
+	if len(loginError) != 0 {
+		return errors.New(string(loginError[0]))
+	}
+	reg = regexp.MustCompile(`handle = "(.+?)"`)
 	handle := reg.FindSubmatch(resp)
+	ePass, _ := encrypt(password, string(handle[1]))
 	c.Jar = jar
 	c.Ftaa = ftaa
 	c.Bfaa = bfaa
+	c.Password = ePass
 	c.Handle = string(handle[1])
-	c.save()
+	c.HandleOrEmail = handleOrEmail
+	if err = c.save(); err != nil {
+		return err
+	}
 	return nil
 }

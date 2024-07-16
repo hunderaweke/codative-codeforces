@@ -27,21 +27,23 @@ type Client struct {
 var Clnt *Client
 
 func Create(host, path string) {
-
 	jar, _ := cookiejar.New(nil)
 	c := &Client{Jar: jar, host: host, path: path, client: nil}
 	if err := c.load(); err != nil {
-		fmt.Println(err)
+		color.Red("%s", "Session file not found")
+		color.Blue("%s", "Creating new configuration file")
 	}
 	c.client = &http.Client{Jar: c.Jar}
 	if err := c.save(); err != nil {
 		fmt.Println(err)
+		color.Red("%s", "Cannot Save the configuration")
 	}
 	Clnt = c
 }
 
 func (c *Client) load() error {
-	file, err := os.Open(c.path + ".codative.session")
+	os.Chdir(c.path)
+	file, err := os.Open(".codative.session")
 	if err != nil {
 		return err
 	}
@@ -57,12 +59,12 @@ func (c *Client) load() error {
 
 func (c *Client) save() error {
 
-	file, err := os.Create(c.path + ".codative.session")
+	os.Chdir(c.path)
+	file, err := os.Create(".codative.session")
 	if err != nil {
 		return err
 	}
-	color.Green("%+v", c)
-	data, err := json.Marshal(c)
+	data, err := json.MarshalIndent(c, "", " ")
 	if err != nil {
 		return err
 	}
