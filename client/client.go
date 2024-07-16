@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-
 	"os"
 
 	"github.com/fatih/color"
@@ -26,9 +25,10 @@ type Client struct {
 
 var Clnt *Client
 
-func Create(host, path string) {
+func Create(host string) {
 	jar, _ := cookiejar.New(nil)
-	c := &Client{Jar: jar, host: host, path: path, client: nil}
+	home, _ := os.UserHomeDir()
+	c := &Client{Jar: jar, host: host, path: home + "/.codative", cl10ient: nil}
 	if err := c.load(); err != nil {
 		color.Red("%s", "Session file not found")
 		color.Blue("%s", "Creating new configuration file")
@@ -42,8 +42,12 @@ func Create(host, path string) {
 }
 
 func (c *Client) load() error {
-	os.Chdir(c.path)
-	file, err := os.Open(".codative.session")
+	err := os.Chdir(c.path)
+	if err != nil {
+		return err
+	}
+
+	file, err := os.Open("session")
 	if err != nil {
 		return err
 	}
@@ -58,9 +62,11 @@ func (c *Client) load() error {
 }
 
 func (c *Client) save() error {
-
-	os.Chdir(c.path)
-	file, err := os.Create(".codative.session")
+	err := os.Chdir(c.path)
+	if err != nil {
+		os.Mkdir(c.path, 0755)
+	}
+	file, err := os.Create("session")
 	if err != nil {
 		return err
 	}

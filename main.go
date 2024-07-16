@@ -1,17 +1,25 @@
 package main
 
 import (
+	"fmt"
+	"os"
+
 	"github.com/fatih/color"
-	"github.com/hunderaweke/codative-codeforces/cmd"
-	"github.com/hunderaweke/codative-codeforces/utils"
+	"github.com/hunderaweke/codative-codeforces/client"
+	"golang.org/x/term"
 )
 
 func main() {
-	data, err := utils.Fetch()
+	client.Create("https://codeforces.com")
+	var handle string
+	color.Blue("%s", "Insert Your handle")
+	fmt.Fscanln(os.Stdin, &handle)
+	color.Blue("%s", "Insert Your password")
+	password, err := term.ReadPassword(0)
+	err = client.Clnt.Login(handle, string(password))
 	if err != nil {
-		color.Red(err.Error())
+		color.Red("%v", err.Error())
 		return
 	}
-	utils.CreateFiles(*data)
-	cmd.Test()
+	color.Green("Login Successful")
 }
