@@ -5,10 +5,11 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"net/http/cookiejar"
+
 	"os"
 
 	"github.com/fatih/color"
+	"github.com/juju/persistent-cookiejar"
 )
 
 type Client struct {
@@ -26,6 +27,7 @@ type Client struct {
 var Clnt *Client
 
 func Create(host, path string) {
+
 	jar, _ := cookiejar.New(nil)
 	c := &Client{Jar: jar, host: host, path: path, client: nil}
 	if err := c.load(); err != nil {

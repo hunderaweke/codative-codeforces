@@ -8,12 +8,12 @@ import (
 	"encoding/hex"
 	"errors"
 	"io"
-	"net/http/cookiejar"
 	"net/url"
-	"regexp"
 
 	"github.com/hunderaweke/codative-codeforces/utils"
+	"github.com/juju/persistent-cookiejar"
 	"golang.org/x/net/publicsuffix"
+	"regexp"
 )
 
 func createHash(hash string) []byte {
