@@ -28,7 +28,7 @@ var Clnt *Client
 func Create(host string) {
 	jar, _ := cookiejar.New(nil)
 	home, _ := os.UserHomeDir()
-	c := &Client{Jar: jar, host: host, path: home + "/.codative", cl10ient: nil}
+	c := &Client{Jar: jar, host: host, path: home + "/.codative", client: nil}
 	if err := c.load(); err != nil {
 		color.Red("%s", "Session file not found")
 		color.Blue("%s", "Creating new configuration file")
