@@ -1,4 +1,4 @@
-package client
+package session
 
 import (
 	"crypto/aes"
@@ -7,12 +7,15 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"errors"
+	"fmt"
 	"io"
 	"net/url"
 	"regexp"
 
+	"github.com/AlecAivazis/survey/v2"
 	"github.com/hunderaweke/codative-codeforces/utils"
-	"github.com/juju/persistent-cookiejar"
+	persistent "github.com/juju/persistent-cookiejar"
+	"github.com/mgutz/ansi"
 	"golang.org/x/net/publicsuffix"
 )
 
@@ -79,16 +82,15 @@ func genBtaa() string {
 	return "44fdcff4e443a6be61d26650b259dd90"
 }
 
-func (c *Client) Login(handleOrEmail, password string) error {
-	jar, _ := cookiejar.New(&cookiejar.Options{PublicSuffixList: publicsuffix.List})
-	c.client.Jar = jar
-	u, _ := url.Parse("https://codeforces.com/enter")
-	b, _ := utils.GetBody(c.client, u)
+func Login(handleOrEmail, password string) error {
+	jar, _ := persistent.New(&persistent.Options{PublicSuffixList: publicsuffix.List})
+	S.Client.Jar = jar
+	u, _ := url.Parse(S.Host + "enter")
+	b, _ := utils.GetBody(S.Client, u)
 	csrfToken, _ := findCsrf(b)
 	ftaa := genFtaa()
 	bfaa := genBtaa()
-	// TODO: Write the implementation for the login well
-	resp, err := utils.PostBody(c.client, u, url.Values{
+	resp, err := utils.PostBody(S.Client, u, url.Values{
 		"csrf_token":    {csrfToken},
 		"action":        {"enter"},
 		"ftaa":          {ftaa},
@@ -109,14 +111,32 @@ func (c *Client) Login(handleOrEmail, password string) error {
 	reg = regexp.MustCompile(`handle = "(.+?)"`)
 	handle := reg.FindSubmatch(resp)
 	ePass, _ := encrypt(password, string(handle[1]))
-	c.Jar = jar
-	c.Ftaa = ftaa
-	c.Bfaa = bfaa
-	c.Password = ePass
-	c.Handle = string(handle[1])
-	c.HandleOrEmail = handleOrEmail
-	if err = c.save(); err != nil {
+	S.Handle = string(handle[1])
+	S.HandleOrEmail = handleOrEmail
+	S.Password = ePass
+	S.Cookies = jar.Cookies(u)
+	S.Bfaa = bfaa
+	S.Ftaa = ftaa
+	if err = S.Save(); err != nil {
 		return err
 	}
 	return nil
+}
+
+func LoginPrompt() {
+	var handle, password string
+	handlePrompt := &survey.Input{
+		Message: "Enter Your Handle or Email:",
+	}
+	survey.AskOne(handlePrompt, &handle)
+	passwordPrompt := &survey.Password{
+		Message: "Enter Password:",
+	}
+	survey.AskOne(passwordPrompt, &password)
+	err := Login(handle, password)
+	if err != nil {
+		fmt.Println(err)
+	}
+	msg := ansi.Color("Logged in Successfully", "green+bh")
+	fmt.Println(msg)
 }

@@ -1,6 +1,6 @@
-package client
+package session
 
-var LANGS = map[string]string{
+var Langs = map[string]string{
 	"43": "GNU GCC C11 5.1.0",
 	"50": "GNU G++14 6.4.0",
 	"54": "GNU G++17 7.3.0",
@@ -33,7 +33,7 @@ var LANGS = map[string]string{
 	"55": "Node.js 15.8.0 (64bit)",
 }
 
-var FILE_EXTENSIONS = map[string]string{
+var FileExtensions = map[string]string{
 	"GNU GCC C11 5.1.0":                ".c",
 	"GNU G++14 6.4.0":                  ".cpp",
 	"GNU G++17 7.3.0":                  ".cpp",
