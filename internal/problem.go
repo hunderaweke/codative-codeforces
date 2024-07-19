@@ -1,42 +1,63 @@
 package internal
 
+import (
+	"fmt"
+	"os"
+	"regexp"
+	"strings"
+
+	md "github.com/JohannesKaufmann/html-to-markdown"
+	"github.com/PuerkitoBio/goquery"
+	"github.com/hunderaweke/codative-codeforces/session"
+	"github.com/hunderaweke/codative-codeforces/utils"
+)
+
 type problem struct {
-	title     string
-	statement string
-	input     []string
-	output    []string
+	title  string
+	input  []string
+	output []string
 }
-func (p *problem) create(tmplId int) error {
+
+func (p *problem) create(data []byte, ext string) error {
+	fmt.Printf("Generating %s\n", p.title)
 	problemDir := utils.ReformString(p.title)
-	os.Mkdir(problemDir, 0644)
+	os.Mkdir(problemDir, 0777)
 	os.Chdir(problemDir)
 	for i, input := range p.input {
-		file, err := os.Create(string(i) + ".in")
+		name := fmt.Sprintf("input%d.in", i)
+		file, err := os.Create(name)
 		if err != nil {
 			return err
 		}
+		defer file.Close()
 		file.Write([]byte(input))
-		file.Close()
 	}
 	for i, output := range p.output {
-		file, err := os.Create(string(i) + ".in")
+		name := fmt.Sprintf("output%d.out", i)
+		file, err := os.Create(name)
 		if err != nil {
 			return err
 		}
+		defer file.Close()
 		file.Write([]byte(output))
-		file.Close()
 	}
-	template := 
+	file, err := os.Create(problemDir + ext)
+	defer file.Write(data)
+	if err != nil {
+		return err
+	}
+	os.Chdir("../")
+	fmt.Printf("Done %s\n", p.title)
 	return nil
 }
 
 func parseProblem(contestID, contestType, problemID string) (p problem) {
-	u := strings.Join([]string{S.Host, contestType, contestID, "problem", problemID}, "/")
-	r, _ := S.Client.Get(u)
+	u := strings.Join([]string{session.S.Host, contestType, contestID, "problem", problemID}, "/")
+	r, _ := session.S.Client.Get(u)
 	doc, _ := goquery.NewDocumentFromReader(r.Body)
 	defer r.Body.Close()
 	h := doc.Find(".sample-tests .input")
-	converter := md.NewConverter(S.Host, true, nil)
+	converter := md.NewConverter(session.S.Host, true, nil)
 	reg := regexp.MustCompile("(?s)```(.*?)```")
 	h.Each(func(i int, s *goquery.Selection) {
 		res := reg.FindSubmatch([]byte(converter.Convert(s)))
@@ -51,7 +72,5 @@ func parseProblem(contestID, contestType, problemID string) (p problem) {
 			p.output = append(p.output, strings.TrimSpace(string(res[1])))
 		}
 	})
-	statement := converter.Convert(doc.Find(".problem-statement"))
-	p.statement = statement
 	return p
 }

@@ -4,32 +4,65 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"sync"
 
 	"github.com/PuerkitoBio/goquery"
-	"github.com/hunderaweke/codative-codeforces/config"
 	"github.com/hunderaweke/codative-codeforces/session"
-	"github.com/hunderaweke/codative-codeforces/utils"
 )
 
 type Contest struct {
-	Problems    []Problem
+	Problems    []problem
 	Title       string
 	ContestType string
+	ContestID   string
 }
 
-func (c *Contest) Create() error {
-	// TODO: Implement creation file for specific contest
-	err := os.Chdir(strings.Join([]string{config.C.BaseDir, c.ContestType}, "/"))
+var (
+	wg sync.WaitGroup
+	mu sync.Mutex
+)
+
+func (c *Contest) Create(directoryName string, template Template) error {
+	err := os.Chdir(c.ContestType)
+	if err != nil {
+		os.Mkdir(c.ContestType, 0777)
+		os.Chdir(c.ContestType)
+	}
+	os.Mkdir(directoryName, 0777)
+	if err = os.Chdir(directoryName); err != nil {
+		return (err)
+	}
+	data, err := template.Load()
+	ext := FileExtensions[template.Lang]
 	if err != nil {
 		return err
 	}
-	contestDir := utils.ReformString(c.Title)
-	os.Mkdir(contestDir, 0644)
+	for _, prob := range c.Problems {
+		if err := prob.create(data, ext); err != nil {
+			return err
+		}
+	}
+	wg.Wait()
 	return nil
 }
 
-func Parse(contestID, contestType string) error {
-	// TODO: Implement the parsing of Contest and creation of files for the contest
+func Parse(contestID, contestType string) Contest {
+	c := Contest{ContestID: contestID, ContestType: contestType, Problems: []problem{}}
+	c.Title = getContestTitle(contestID, contestType)
+	probs := findProblems(contestID, contestType)
+	for id := range probs {
+		wg.Add(1)
+		go func(id string) {
+			defer wg.Done()
+			p := parseProblem(contestID, contestType, id)
+			p.title = id + ". " + probs[id]
+			mu.Lock()
+			c.Problems = append(c.Problems, p)
+			mu.Unlock()
+		}(id)
+	}
+	wg.Wait()
+	return c
 }
 
 func getContestTitle(contestID, contestType string) string {
