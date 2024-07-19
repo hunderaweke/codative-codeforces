@@ -5,6 +5,7 @@ import (
 	"math/rand"
 	"net/http"
 	"net/url"
+	"unicode"
 )
 
 func PostBody(client *http.Client, u *url.URL, data url.Values) ([]byte, error) {
@@ -42,4 +43,19 @@ func RandString(n int) string {
 		b[i] = CHA[rand.Intn(len(CHA))]
 	}
 	return string(b)
+}
+
+func ReformString(name string) string {
+	var reformedString []rune
+	for _, ch := range name {
+		if unicode.IsSymbol(ch) || unicode.IsPunct(ch) {
+			continue
+		}
+		if unicode.IsSpace(ch) {
+			reformedString = append(reformedString, '_')
+			continue
+		}
+		reformedString = append(reformedString, ch)
+	}
+	return string(reformedString)
 }

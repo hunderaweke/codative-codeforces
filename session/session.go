@@ -32,6 +32,7 @@ func init() {
 }
 
 func (s *Session) Load() error {
+	prev, _ := os.Getwd()
 	err := os.Chdir(s.path)
 	if err != nil {
 		return err
@@ -49,6 +50,7 @@ func (s *Session) Load() error {
 	u, _ := url.Parse(S.Host)
 	jar.SetCookies(u, S.Cookies)
 	S.Client = &http.Client{Jar: jar}
+	os.Chdir(prev)
 	return nil
 }
 
