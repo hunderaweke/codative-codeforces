@@ -3,44 +3,50 @@ package config
 import (
 	"encoding/json"
 	"os"
-
-	"github.com/mitchellh/go-homedir"
 )
 
+var C GlobalConfig
+
 type Config interface {
-	save() error
-}
-type LocalConfig struct {
-	Lang       string `json:"lang,omitempty"`
-	TemplateId int    `json:"template_id,omitempty"`
-	ContestId  string `json:"contest_id,omitempty"`
+	Save() error
 }
 type GlobalConfig struct {
-	Handle    string     `json:"handle,omitempty"`
-	Host      string     `json:"host,omitempty"`
-	Templates []Template `json:"templates,omitempty"`
+	BaseDir    string     `json:"base_dir"`
+	Handle     string     `json:"handle,omitempty"`
+	Host       string     `json:"host,omitempty"`
+	Templates  []Template `json:"templates,omitempty"`
+	configPath string
 }
 
-func load() (Config, error) {
-	//TODO: Loading both Global and Local Config
-
-}
-
-func (c *LocalConfig) save() error {
-	//TODO: Saving the local config to the Contest path
-	return nil
-}
-func (c *GlobalConfig) save() error {
-	homeDir, err := homedir.Dir()
+func (c *GlobalConfig) Load() error {
+	err := os.Chdir(c.configPath)
 	if err != nil {
 		return err
 	}
-	_, err = os.ReadFile(homeDir + ".codative_config")
-	if err == nil {
-		os.Remove(homeDir + ".codative_config")
+	file, err := os.ReadFile("config.json")
+	if err != nil {
+		return err
 	}
-	file, err := os.Create(homeDir + ".codative_config")
-	bytes, err := json.Marshal(c)
-	file.Write(bytes)
+	err = json.Unmarshal(file, c)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (c *GlobalConfig) Save() error {
+	err := os.Chdir(c.configPath)
+	if err != nil {
+		return err
+	}
+	file, err := os.Create("config.json")
+	if err != nil {
+		return err
+	}
+	data, err := json.MarshalIndent(c, "", " ")
+	if err != nil {
+		return err
+	}
+	file.Write(data)
 	return nil
 }
