@@ -3,18 +3,15 @@ package config
 import (
 	"encoding/json"
 	"os"
+
+	"github.com/hunderaweke/codative-codeforces/internal"
 )
 
-var C GlobalConfig
-
-type Config interface {
-	Save() error
-}
 type GlobalConfig struct {
-	BaseDir    string     `json:"base_dir"`
-	Handle     string     `json:"handle,omitempty"`
-	Host       string     `json:"host,omitempty"`
-	Templates  []Template `json:"templates,omitempty"`
+	BaseDir    string              `json:"base_dir"`
+	Handle     string              `json:"handle,omitempty"`
+	Host       string              `json:"host,omitempty"`
+	Templates  []internal.Template `json:"templates,omitempty"`
 	configPath string
 }
 
