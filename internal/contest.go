@@ -8,6 +8,7 @@ import (
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/hunderaweke/codative-codeforces/session"
+	"github.com/hunderaweke/codative-codeforces/utils"
 )
 
 type Contest struct {
@@ -28,6 +29,7 @@ func (c *Contest) Create(directoryName string, template Template) error {
 		os.Mkdir(c.ContestType, 0777)
 		os.Chdir(c.ContestType)
 	}
+	directoryName = utils.ReformString(c.ContestID + "_" + directoryName)
 	os.Mkdir(directoryName, 0777)
 	if err = os.Chdir(directoryName); err != nil {
 		return (err)
