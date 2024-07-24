@@ -47,3 +47,6 @@ func (c *GlobalConfig) Save() error {
 	file.Write(data)
 	return nil
 }
+
+func (c *GlobalConfig) ConfigPrompt() {
+}
