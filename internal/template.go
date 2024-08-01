@@ -10,7 +10,6 @@ import (
 
 type Template struct {
 	Lang  string `json:"lang,omitempty"`
-	Path  string `json:"path,omitempty"`
 	Alias string `json:"alias"`
 }
 
