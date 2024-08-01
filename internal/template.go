@@ -9,16 +9,22 @@ import (
 )
 
 type Template struct {
-	Lang  string `json:"lang,omitempty"`
-	Alias string `json:"alias"`
+	Lang    string `json:"lang,omitempty"`
+	Path    string `json:"path,omitempty"`
+	Alias   string `json:"alias"`
+	Command string `json:"command"`
 }
 
 func (t *Template) Load() ([]byte, error) {
+	currPath, _ := os.Getwd()
+	homePath, _ := os.UserHomeDir()
+	os.Chdir(homePath)
 	bytes, err := os.ReadFile(t.Path)
 	if err != nil {
 		color.Red("Error Reading template file %v\n", err)
 		return nil, err
 	}
+	os.Chdir(currPath)
 	return bytes, nil
 }
 
@@ -38,6 +44,7 @@ func NewTemplate(filePath, lang, alias string) Template {
 	t := Template{Path: filePath, Lang: lang, Alias: alias}
 	return t
 }
+
 func TemplatePrompt() (Template, error) {
 	var t Template
 	var options []string
@@ -66,6 +73,13 @@ func TemplatePrompt() (Template, error) {
 			Prompt: &survey.Input{
 				Message: "Insert an alias for the template",
 				Help:    "This is the alias that will be used for loading and searching the alias",
+			},
+			Validate: survey.Required,
+		},
+		{
+			Name: "command",
+			Prompt: &survey.Input{
+				Message: "Enter a command for running the template (eg: python3 $filepath$)",
 			},
 			Validate: survey.Required,
 		},
