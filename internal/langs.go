@@ -1,5 +1,11 @@
 package internal
 
+type Lang struct {
+	Name          string
+	Command       string
+	FileExtension string
+}
+
 var Langs = map[string]string{
 	"43": "GNU GCC C11 5.1.0",
 	"50": "GNU G++14 6.4.0",

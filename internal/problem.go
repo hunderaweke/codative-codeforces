@@ -5,6 +5,7 @@ import (
 	"os"
 	"regexp"
 	"strings"
+	"sync"
 
 	md "github.com/JohannesKaufmann/html-to-markdown"
 	"github.com/PuerkitoBio/goquery"
@@ -18,36 +19,53 @@ type problem struct {
 	output []string
 }
 
-func (p *problem) create(data []byte, ext string) error {
+func (p *problem) create(data []byte, ext string, path string) error {
+	var wg sync.WaitGroup
+	os.Chdir(path)
 	fmt.Printf("Generating %s\n", p.title)
 	problemDir := utils.ReformString(p.title)
 	os.Mkdir(problemDir, 0777)
 	os.Chdir(problemDir)
+	ch := make(chan error)
 	for i, input := range p.input {
-		name := fmt.Sprintf("input%d.in", i)
-		file, err := os.Create(name)
-		if err != nil {
-			return err
-		}
-		defer file.Close()
-		file.Write([]byte(input))
+		wg.Add(1)
+		go func(i int, input string) {
+			defer wg.Done()
+			name := fmt.Sprintf("input%d.in", i)
+			file, err := os.Create(name)
+			if err != nil {
+				ch <- (err)
+				return
+			}
+			defer file.Close()
+			file.Write([]byte(input))
+		}(i, input)
 	}
 	for i, output := range p.output {
-		name := fmt.Sprintf("output%d.out", i)
-		file, err := os.Create(name)
-		if err != nil {
-			return err
-		}
-		defer file.Close()
-		file.Write([]byte(output))
+		wg.Add(1)
+		go func(i int, output string) {
+			defer wg.Done()
+			name := fmt.Sprintf("output%d.out", i)
+			file, err := os.Create(name)
+			if err != nil {
+				ch <- (err)
+				return
+			}
+			defer file.Close()
+			file.Write([]byte(output))
+		}(i, output)
 	}
+	/* if <-ch != nil {
+		return <-ch
+	} */
 	file, err := os.Create(problemDir + ext)
 	defer file.Write(data)
 	if err != nil {
 		return err
 	}
-	os.Chdir("../")
+	defer os.Chdir(path)
 	fmt.Printf("Done %s\n", p.title)
+	wg.Wait()
 	return nil
 }
 

@@ -12,7 +12,7 @@ import (
 )
 
 type Contest struct {
-	Problems    []problem
+	Problems    map[string]problem
 	Title       string
 	ContestType string
 	ContestID   string
@@ -29,27 +29,27 @@ func (c *Contest) Create(directoryName string, template Template) error {
 		os.Mkdir(c.ContestType, 0777)
 		os.Chdir(c.ContestType)
 	}
-	directoryName = utils.ReformString(c.ContestID + "_" + directoryName)
+	directoryName = utils.ReformString(c.ContestID + " " + directoryName)
 	os.Mkdir(directoryName, 0777)
 	if err = os.Chdir(directoryName); err != nil {
 		return (err)
 	}
+	currDir, _ := os.Getwd()
 	data, err := template.Load()
 	ext := FileExtensions[template.Lang]
 	if err != nil {
 		return err
 	}
 	for _, prob := range c.Problems {
-		if err := prob.create(data, ext); err != nil {
+		if err := prob.create(data, ext, currDir); err != nil {
 			return err
 		}
 	}
-	wg.Wait()
 	return nil
 }
 
 func Parse(contestID, contestType string) Contest {
-	c := Contest{ContestID: contestID, ContestType: contestType, Problems: []problem{}}
+	c := Contest{ContestID: contestID, ContestType: contestType, Problems: make(map[string]problem)}
 	c.Title = getContestTitle(contestID, contestType)
 	probs := findProblems(contestID, contestType)
 	for id := range probs {
@@ -58,9 +58,7 @@ func Parse(contestID, contestType string) Contest {
 			defer wg.Done()
 			p := parseProblem(contestID, contestType, id)
 			p.title = id + ". " + probs[id]
-			mu.Lock()
-			c.Problems = append(c.Problems, p)
-			mu.Unlock()
+			c.Problems[id] = p
 		}(id)
 	}
 	wg.Wait()
@@ -85,16 +83,17 @@ func findProblems(contestID, contestType string) map[string]string {
 	s := doc.Find(".problems").Find("tr")
 	problems := make(map[string]string)
 	key := ""
-	s.Find("tr > td").Each(func(i int, s *goquery.Selection) {
-		index := strings.TrimSpace(s.Find(".id > a").Text())
-		if len(index) > 0 {
-			key = index
-		}
-		name := s.Find("div>a").Text()
-		if len(name) > 0 {
-			problems[key] = name
-			key = ""
-		}
-	})
+	s.Find("tr > td").Each(
+		func(i int, s *goquery.Selection) {
+			index := strings.TrimSpace(s.Find(".id > a").Text())
+			if len(index) > 0 {
+				key = index
+			}
+			name := s.Find("div>a").Text()
+			if len(name) > 0 {
+				problems[key] = name
+				key = ""
+			}
+		})
 	return problems
 }
