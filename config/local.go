@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"os"
 
+	"github.com/fatih/color"
 	"github.com/hunderaweke/codative-codeforces/internal"
 )
 
@@ -46,4 +47,10 @@ func (c *LocalConfig) Load(path string) error {
 }
 
 func LocalConfigPrompt() {
+	var globalConfig GlobalConfig
+	globalConfig.ConfigPath = "/home/hundera/.codative/"
+	if err := globalConfig.Load(); err != nil {
+		color.Red("Failed to load the global configutation file %v", err.Error())
+	}
+
 }
